@@ -1,0 +1,24 @@
+<!doctype html>  
+<html lang="en">
+   <title>My Iot</title>
+    <head>
+
+    </head>
+    <body>
+        <h1 align="center">DAshboard!</h1>
+        <div id="future"></div>
+         <script src="/jquery/dist/jquery.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script> 
+        alert("Adf") 
+         var socket = io.connect('http://172.24.144.106:3000');
+         socket.on('connect', function(data) {
+            alert("Asdf");
+            socket.emit('ldrData', 'ameyashukla');
+         });
+         socket.on('server', function(data) {
+                console.log(data);
+        });
+        </script>  
+    </body>
+</html>  

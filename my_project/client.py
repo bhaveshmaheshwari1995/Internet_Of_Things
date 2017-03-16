@@ -12,8 +12,11 @@ def on_message(client, userdata, msg):
     print("*********************msg****************************")
     print(msg.payload)
     if msg.payload == 'glow_led':
-       client.publish("client/ameyashukla/glowLed", "The led is switched off")
-
+        client.publish("client/ameyashukla/glowLed", "The led is switched off")
+    if msg.payload == 'ldrData':
+        client.publish("client/ameyashukla/glowLed", "The led is switched off")
+        for i  in range(1,150):
+            client.publish("client/ameyashukla/ldrData",i)    
 
 
 
