@@ -46,4 +46,4 @@ io.on('connection', function(client_socket) {
     });
 });
 
-server.listen(3000);  
+server.listen(4200);  
