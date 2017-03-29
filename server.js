@@ -14,6 +14,7 @@ var tess = tessocr.tess()
 var morgan = require('morgan');
 var tesseract = require('node-tesseract');
 app.use(morgan('dev'));
+var fs = require('fs');
 //..for connecting to mongoose..//
 mongoose.connect(config.url);
 
@@ -100,16 +101,20 @@ function decodeBase64Image(dataString)
           return response;
         }
 client.on('message', function (topic, message) {
-console.log(message);
-                if(topic === 'client/ameyashukla/ultraSonicData'){
-                        console.log("ultra data");
-			var imageBuffer = decodeBase64Image(message);
-		require('fs').writeFile('out.jpg', imageBuffer,  function() {
-  				console.log('DEBUG - feed:message: Saved to disk image attached by user:');
-			});
-                io.emit("server",'hey client');
-                        }
-                });
+console.log(message.toString);
+    if(topic === 'client/ameyashukla/ultraSonicData'){
+                 console.log("ultra data");
+                 var base64Image = message.toString('base64');
+                 var decodedImage = new Buffer(base64Image, 'base64');
+                    fs.writeFile('image_decoded.jpeg', decodedImage, function(err) {
+                        if(err)
+                            console.log(err);
+                        else
+                            console.log("success");
+
+                    });
+                    }
+});
 
 
 app.get('/parkingStatus/:userName',function(req,res){
