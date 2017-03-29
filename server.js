@@ -1,13 +1,24 @@
-var mqtt = require('mqtt')
-var client  = mqtt.connect('mqtt://localhost:1883')
+var mqtt = require('mqtt');
+var client  = mqtt.connect('mqtt://localhost:1883');
 var express = require('express');  
 var app = express();  
 var server = require('http').createServer(app);  
 var io = require('socket.io')(server);
+var mongoose = require('mongoose');
+var cors = require('cors')
+var config =require('./config');
+var parkingFacility_model = require('./models/parkingFacility');
+var parkingSlot_model = require('./models/parkingSlot');
+var tessocr = require('tessocr');
+var tess = tessocr.tess()
 
+var tesseract = require('node-tesseract');
 
-app.use(express.static(__dirname + '/node_modules'));  
- 
+//..for connecting to mongoose..//
+mongoose.connect(config.url);
+
+app.use(cors());
+app.use(express.static(__dirname + '/node_modules'));   
 client.on('connect', function () {
 
 })
@@ -26,13 +37,71 @@ app.get('/glowLed/:userName', function (req, res) {
 	})
 })
 
-app.get('/ldr', function(req, res,next) {  
+app.post('/addFacility',function(req,res){
+
+	var facility = new parkingFacility_model({
+		name: "A",
+		fid: "A",
+		capacity:10
+	});
+	facility.save(function(err){
+		if(err){
+			console.log(err);
+		}
+		else{
+			console.log("added SuccessFully")
+		}
+	})
+});
+
+
+
+app.get('/', function(req, res,next) {  
     res.sendFile(__dirname + '/index.html');
+});
+
+app.get('/parkingInfo',function(req,res){
+	var data = [
+				{slot:"A1",block:"A",facility:"Aspire",status:'full'},
+                {slot:"A2",block:"A",facility:"Aspire",status:'available'},
+                {slot:"B1",block:"B",facility:"Aspire",status:'full'},
+                {slot:"B2",block:"B",facility:"Aspire",status:'full'},
+                {slot:"C1",block:"C",facility:"Aspire",status:'available'},
+                {slot:"C2",block:"C",facility:"Aspire",status:'full'},
+                {slot:"A1",block:"A",facility:"Info",status:'available'},
+                {slot:"A2",block:"A",facility:"Info",status:'full'},
+                {slot:"B1",block:"B",facility:"Info",status:'full'},
+                {slot:"B2",block:"B",facility:"Info",status:'available'}
+    ];
+    res.json({success:true,data:data});
+});
+
+
+app.get('/parkingStatus/:userName',function(req,res){
+	console.log(req.params.userName)
+	var user = req.params.userName;
+ 	io.emit(user,{"slot_no":"A2","reg_no":"TN 14 H 08895","in_time":new Date(),status:"full"});
+ 	res.json("Hogata")
+
+})
+
+var options = {
+    l: 'eng',
+    psm: 6,
+    binary: '/usr/local/bin/tesseract'
+};
+tesseract.process('file.jpeg',options,function(err, text) {
+    if(err) {
+        console.error(err);
+    } else {
+        console.log(text);
+        console.log("finished")
+    }
 });
 
 //**************************************Web Socket******************************************//
 io.on('connection', function(client_socket) {
-    client_socket.on('ldrData', function(data) {
+    client_socket.on('ultraSonicData', function(data) {
     	client.subscribe('client/'+data+'/ldrData')
     	client.publish('server/'+data,"ldrData")
     	client.on('message', function (topic, message) {
@@ -45,5 +114,4 @@ io.on('connection', function(client_socket) {
         console.log(data);
     });
 });
-
 server.listen(4200);  
