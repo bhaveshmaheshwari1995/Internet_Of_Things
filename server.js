@@ -101,7 +101,7 @@ function decodeBase64Image(dataString)
           return response;
         }
 client.on('message', function (topic, message) {
-console.log(message.toString);
+console.log(message);
     if(topic === 'client/ameyashukla/ultraSonicData'){
                  console.log("ultra data");
                  var base64Image = message.toString('base64');
