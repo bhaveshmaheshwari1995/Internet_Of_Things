@@ -11,9 +11,9 @@ var parkingFacility_model = require('./models/parkingFacility');
 var parkingSlot_model = require('./models/parkingSlot');
 var tessocr = require('tessocr');
 var tess = tessocr.tess()
-var morgan = require('morgan');
+
 var tesseract = require('node-tesseract');
-app.use(morgan('dev'));
+
 //..for connecting to mongoose..//
 mongoose.connect(config.url);
 
@@ -60,11 +60,6 @@ app.get('/', function(req, res,next) {
     res.sendFile(__dirname + '/index.html');
 });
 
-app.get('/smartPark/', function(req, res,next) {  
-    res.json({success:true,message:"This is a Smart PArk App"});
-});
-
-
 
 app.get('/parkingInfo',function(req,res){
 	var data = [
@@ -84,29 +79,10 @@ app.get('/parkingInfo',function(req,res){
 
 client.subscribe('client/ameyashukla/ultraSonicData')
 
-function decodeBase64Image(dataString) 
-        {
-          var matches = dataString;
-          var response = {};
-
-          if (matches.length !== 3) 
-          {
-            return new Error('Invalid input string');
-          }
-
-          response.type = matches[1];
-          response.data = new Buffer(matches[2], 'base64');
-
-          return response;
-        }
-client.on('message', function (topic, message) {
-console.log(message);
+client.on('message', function (topic, message) 
                 if(topic === 'client/ameyashukla/ultraSonicData'){
-                        console.log("ultra data");
-			var imageBuffer = decodeBase64Image(message);
-		require('fs').writeFile('out.jpg', imageBuffer,  function() {
-  				console.log('DEBUG - feed:message: Saved to disk image attached by user:');
-			});
+                        console.log("ldr data");
+                        console.log(message.toString())
                 io.emit("server",'hey client');
                         }
                 });
