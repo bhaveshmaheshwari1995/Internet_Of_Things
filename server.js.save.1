@@ -11,10 +11,9 @@ var parkingFacility_model = require('./models/parkingFacility');
 var parkingSlot_model = require('./models/parkingSlot');
 var tessocr = require('tessocr');
 var tess = tessocr.tess()
-var morgan = require('morgan');
+
 var tesseract = require('node-tesseract');
-app.use(morgan('dev'));
-var fs = require('fs');
+
 //..for connecting to mongoose..//
 mongoose.connect(config.url);
 
@@ -24,7 +23,7 @@ client.on('connect', function () {
 
 })
 
-pictures = [];
+
 //******************************************all the api end points***************************//
 app.get('/glowLed/:userName', function (req, res) {
 	client.subscribe('client/'+req.params.userName+'/glowLed')
@@ -38,37 +37,6 @@ app.get('/glowLed/:userName', function (req, res) {
 	})
 })
 
-function reconstructBase64String(chunk) {
-  console.log(chunk);
-    pChunk = JSON.parse(chunk);
-
-    //creates a new picture object if receiving a new picture, else adds incoming strings to an existing picture 
-    if (pictures[pChunk["pic_id"]]==null) {
-        pictures[pChunk["pic_id"]] = {"count":0, "total":pChunk["size"], pieces: {}, "pic_id": pChunk["pic_id"]};
-
-        pictures[pChunk["pic_id"]].pieces[pChunk["pos"]] = pChunk["data"];
-
-    }
-
-    else {
-        pictures[pChunk["pic_id"]].pieces[pChunk["pos"]] = pChunk["data"];
-        pictures[pChunk["pic_id"]].count += 1;
-
-
-        if (pictures[pChunk["pic_id"]].count == pictures[pChunk["pic_id"]].total) {
-        console.log("Image reception compelete");
-        var str_image=""; 
-
-        for (var i = 0; i <= pictures[pChunk["pic_id"]].total; i++) 
-            str_image = str_image + pictures[pChunk["pic_id"]].pieces[i];
-
-        var source = 'data:image/jpeg;base64,'+str_image;
-console.log(source);
-        }
-
-    }
-
-}
 app.post('/addFacility',function(req,res){
 
 	var facility = new parkingFacility_model({
@@ -93,12 +61,12 @@ app.get('/', function(req, res,next) {
 });
 
 app.get('/smartPark/', function(req, res,next) {  
-    res.json({success:true,message:"This is a Smart PArk App"});
+    res.json({success:true,message:"This is a Smart PArk App"}):
 });
 
 
 
-app.get('/parkingInfo',function(req,res){
+app.et('/parkingInfo',function(req,res){
 	var data = [
 				{slot:"A1",block:"A",facility:"Aspire",status:'full'},
                 {slot:"A2",block:"A",facility:"Aspire",status:'available'},
@@ -116,28 +84,14 @@ app.get('/parkingInfo',function(req,res){
 
 client.subscribe('client/ameyashukla/ultraSonicData')
 
-function decodeBase64Image(dataString) 
-        {
-          var matches = dataString;
-          var response = {};
-
-          if (matches.length !== 3) 
-          {
-            return new Error('Invalid input string');
-          }
-
-          response.type = matches[1];
-          response.data = new Buffer(matches[2], 'base64');
-
-          return response;
-        }
 client.on('message', function (topic, message) {
 console.log(message);
-    if(topic === 'client/ameyashukla/ultraSonicData'){
-                 console.log("ultra data");
-		reconstructBase64String(message);
-                    }
-});
+                if(topic === 'client/ameyashukla/ultraSonicData'){
+                        console.log("ultra data");
+                        console.log(message.toString())
+                io.emit("server",'hey client');
+                        }
+                });
 
 
 app.get('/parkingStatus/:userName',function(req,res){
