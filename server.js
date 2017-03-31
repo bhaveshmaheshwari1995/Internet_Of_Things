@@ -191,8 +191,13 @@ app.get('/smartPark/', function(req, res, next) {
 
 apiRoutes.get('/currentMeter/:mobileNo',function(req,res){
     getCurrentMeter(req.params.mobileNo,function(order){
+        if(order == null){
+            res.json({"success":false,code:1,message:"no meter Data"});
+        }
+        else{    
         totalTime = (new Date() - new Date(order.inTime))/(60*1000); 
-        res.json({"success":true,code:1,order:order,totalTime:totalTime,message:"current meter Data"});
+        res.json({"success":true,code:2,order:order,totalTime:totalTime,message:"current meter Data"});
+        }
     })
 })
 
