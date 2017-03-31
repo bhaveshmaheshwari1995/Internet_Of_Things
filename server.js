@@ -57,6 +57,36 @@ apiRoutes.get('/', function(req, res, next) {
     res.sendFile(__dirname + '/index.html');
 });
 
+apiRoutes.post('/slots', function(req, res) {
+
+    var slot = new parkingSlot_model({
+        name: req.body.slotName,
+        slotId: req.body.slotId,
+        facilityId:req.body.facilityId,
+        clientId:req.body.clientId,
+        status: "available"
+    });
+    slot.save(function(err) {
+        if (err) {
+            res.json({success:false,code:0,message:err});
+        } else {
+            res.json({success:true,code:1,message:"slot added"});
+            console.log("added SuccessFully")
+        }
+    })
+});
+
+apiRoutes.get('/slots/:clientId', function(req, res, next) {
+    parkingSlot_model.find({clientId:req.params.clientId},function(err,slots){
+        if(err){
+            res.json({"success":false,code:0,err:err})
+        }else{
+            res.json({"success":true,code:1,slots:slots})
+        }
+    })
+});
+
+
 app.get('/smartPark/', function(req, res, next) {
     res.json({
         success: true,
@@ -73,12 +103,12 @@ apiRoutes.get('/currentMeter/:mobileNo',function(req,res){
 apiRoutes.post('/qrdata', function(req, res) {
     users_model.findOne({mobileNo:req.body.mobileNo},function(err,user){
         if(err){
-            console.log(err);
+            res.json({"success":false,code:0,message:err})
         }
         else{
             orders_model.update({slotId:req.body.slotId,status:"open"}, {$set:{'vehicleNo':user.vehicleNo,'mobileNo':user.mobileNo}}, {multi:false},function(err,raw,data){
                 if(err){
-                    console.log(err);
+                    res.json({"success":false,code:0,message:err})
                 }
                 else{
                     if(raw.n == 0){
@@ -88,7 +118,16 @@ apiRoutes.post('/qrdata', function(req, res) {
                             res.json({"success":false,code:2,message:"Already Scanned"});  
                         }else{
                             getCurrentMeter(req.body.mobileNo,function(order){
-                                res.json({"success":true,code:3,message:"qrcode added",order:order});  
+                                parkingSlot_model.update({slotId:req.body.slotId},{$set:{status:'full'}},function(err,user){
+                                    if(err){
+                                        console.log("Some Error",err);
+                                    }
+                                    else{
+                                        console.log("updated");
+                                        res.json({"success":true,code:3,message:"qrcode added",order:order}); 
+                                    }
+                                })
+                                 
                             });
                         }
                     }
@@ -124,13 +163,28 @@ client.on('message', function(topic, message) {
     switch(topic){
         case 'client/smartPark/ultraSonicData/occupied':
             startMeter(JSON.parse(message.valueOf()), function(responseData){
-                console.log(responseData);
+                parkingSlot_model.update({slotId:data.sensor_id},{$set:{status:'full',inTime:responseData.inTime,vehicleNo:responseData.vehicleNo}},function(err,user){
+                                if(err){
+                                    console.log("Some Error",err);
+                                }
+                                else{
+                                    console.log("updated");
+                                }
+                })
             })
             break;
         case 'client/smartPark/ultraSonicData/available':
             console.log(JSON.parse(message.valueOf()))
             stopMeter(JSON.parse(message.valueOf()),function(responseData){
                 console.log(responseData);
+                parkingSlot_model.update({slotId:data.sensor_id},{$set:{status:'available',inTime:"",vehicleNo:""}},function(err,user){
+                                if(err){
+                                    console.log("Some Error",err);
+                                }
+                                else{
+                                    console.log("updated");
+                                }
+                })
             })
             break;
     }
@@ -162,12 +216,13 @@ var startMeter = function(data,callback){
                         inTime:new Date(),
                         status:"open",
                     });
-                    newOrder.save(function(err,user){
+
+                    newOrder.save(function(err,order){
                         if(err){
                             console.log(err);
                         }
                         else{
-                            console.log(user);
+                            callback(order);
                         }
                     })
                     

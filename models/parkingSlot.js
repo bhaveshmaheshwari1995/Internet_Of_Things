@@ -3,10 +3,12 @@ var Schema = mongoose.Schema
 
 var parkingSlot = new Schema({
   name:String,
-  sid:String,
-  status:Number,
+  slotId:String,
+  status:String,
   regNo:String,
-  inTime:Date
+  inTime:Date,
+  clientId:String,
+  facilityId:String
 
 })
 
