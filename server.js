@@ -144,6 +144,18 @@ apiRoutes.get('/clients', function(req, res, next) {
     })
 });
 
+
+apiRoutes.get('/history/:mobileNo', function(req, res, next) {
+    orders_model.find({mobileNo:req.params.mobileNo,status:"close"},function(err,orders){
+        if(err){
+            res.json({"success":false,code:0,err:err})
+        }else{
+            res.json({"success":true,code:1,orders:orders})
+        }
+    })
+});
+
+
 apiRoutes.get('/', function(req, res, next) {
     res.sendFile(__dirname + '/index.html');
 });
