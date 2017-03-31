@@ -87,53 +87,34 @@ apiRoutes.get('/reports/:toDate/:fromDate', function(req, res, next) {
     fromDate.setHours(req.params.fromDate.split(" - ")[1].split(":")[0]);
     fromDate.setMinutes(req.params.fromDate.split(" - ")[1].split(":")[1]);
     console.log(fromDate);
+    tempArray = [];
+
     orders_model.find({inTime: { $gt:toDate, $lt:fromDate},status:"close"},function(err,orders){
         if(err){
             console.log(err);
         }
         else{
-            console.log(orders);
-            var tempArray = [];var finalArray = new Array();
-            for(var i=0;i<orders.length;i++){
-                console.log("**************************************************8",orders[i])
-                var hrs = (new Date(orders[i].outTime) - new Date(orders[i].inTime))/(60*60*1000)
-                tempArray.push({"slot":orders[i].slotId,"time":(new Date(orders[i].outTime) - new Date(orders[i].inTime))})
-                parkingSlot_model.findOne({slotId:orders[i].slotId},function(err,slot){
+            console.log(orders)
+
+            getReportData(orders,function(responseData){
+                res.json({"success":true,data:responseData});
+            })
+
+        
+        }
+    })
+});
+
+
+var getReportData = function(data,callback){
+    parkingSlot_model.findOne({},function(err,slots){
                     if(err){
                         
                     }else{
-                        tempIndex = -1;
-                        if(finalArray.length != 0){
-
-                            for(var k=0;k<finalArray.length;k++){
-                                if(finalArray[k].facility == slot.facilityId){
-                                    tempIndex = k;
-                                    console.log("INDEx",k);
-                                    break;
-                                }
-                            }
-                            if(tempIndex == -1){
-                                
-                                finalArray.push({"facility":slot.facilityId,"occupiedHours":hrs})
-                            }
-                            else{
-                                console.log("asdf")
-                                finalArray[tempIndex].occupiedHours = finalArray[tempIndex].occupiedHours + hrs;
-                            }
-                        }
-                        else{
-                            console.log("Phela");
-                            finalArray.push({"facility":slot.facilityId,"occupiedHours":hrs});
-                        }
-
+                        callback({parkingSlots:slots,orders:data})
                     }
                 })
-            console.log(finalArray);
-            }
-        }
-    })
-    res.json("asdf")
-});
+}
 apiRoutes.get('/clients', function(req, res, next) {
     parkingClient_model.find({},function(err,clients){
         if(err){
@@ -352,7 +333,7 @@ var startMeter = function(data,callback){
 
 var stopMeter = function(data,callback){
     console.log(data)
-    orders_model.findOne({slotId:data.sensor_id},function(err,order){
+    orders_model.findOne({slotId:data.sensor_id,status:"open"},function(err,order){
         if(err){
 
         }else{
