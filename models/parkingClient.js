@@ -1,13 +1,12 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema
 
-var parkingFacility = new Schema({
-  name:String,
+var parkingClient = new Schema({
   clientId:String,
-  capacity:Number,
-  createdAt:Date
+  defaultFacility:String,
+  createdAt:Date,
 })
 
 // module.exports allows us to pass this to other files when it is called
-module.exports = mongoose.model('parkingFacility',parkingFacility);
+module.exports = mongoose.model('parkingClient',parkingClient);
 

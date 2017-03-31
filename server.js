@@ -7,6 +7,7 @@ var io = require('socket.io')(server);
 var mongoose = require('mongoose');
 var cors = require('cors')
 var config = require('./config');
+var parkingClient_model = require('./models/parkingClient');
 var parkingFacility_model = require('./models/parkingFacility');
 var parkingSlot_model = require('./models/parkingSlot');
 var users_model = require('./models/users');
@@ -36,44 +37,138 @@ client.subscribe('client/smartPark/ultraSonicData/available')
 //******************************************all the api end points***************************//
 
 
-app.post('/addFacility', function(req, res) {
+apiRoutes.post('/facility', function(req, res) {
     var facility = new parkingFacility_model({
-        name: "A",
-        fid: "A",
-        capacity: 10
+        name: req.body.name,
+        clientId: req.body.client,
+        capacity: req.body.capacity,
+        createdAt:new Date()
     });
     facility.save(function(err) {
         if (err) {
-            console.log(err);
+            res.json({success:false,code:0,message:err});
         } else {
+            res.json({success:true,code:1,message:"facility added"});
+            console.log("added SuccessFully")
+        }
+    })
+});
+apiRoutes.get('/facility/:clientId', function(req, res, next) {
+    parkingFacility_model.find({clientId:req.params.clientId},function(err,facilities){
+        if(err){
+            res.json({"success":false,code:0,err:err})
+        }else{
+            res.json({"success":true,code:1,facilities:facilities})
+        }
+    })
+});
+apiRoutes.post('/clients', function(req, res) {
+    var client = new parkingClient_model({
+        clientId:req.body.client,
+        defaultFacility: req.body.defaultFacility,
+        createdAt:new Date()
+    });
+    client.save(function(err) {
+        if (err) {
+            res.json({success:false,code:0,message:err});
+        } else {
+            res.json({success:true,code:1,message:"facility added"});
             console.log("added SuccessFully")
         }
     })
 });
 
+apiRoutes.get('/reports/:toDate/:fromDate', function(req, res, next) {
+    toDate = new Date(req.params.toDate.split(" - ")[0]);
+    toDate.setHours(req.params.toDate.split(" - ")[1].split(":")[0]);
+    toDate.setMinutes(req.params.toDate.split(" - ")[1].split(":")[1])
+    console.log(toDate);
+    fromDate = new Date(req.params.fromDate.split(" - ")[0]);
+    fromDate.setHours(req.params.fromDate.split(" - ")[1].split(":")[0]);
+    fromDate.setMinutes(req.params.fromDate.split(" - ")[1].split(":")[1]);
+    console.log(fromDate);
+    orders_model.find({inTime: { $gt:toDate, $lt:fromDate},status:"close"},function(err,orders){
+        if(err){
+            console.log(err);
+        }
+        else{
+            console.log(orders);
+            var tempArray = [];var finalArray = new Array();
+            for(var i=0;i<orders.length;i++){
+                console.log("**************************************************8",orders[i])
+                var hrs = (new Date(orders[i].outTime) - new Date(orders[i].inTime))/(60*60*1000)
+                tempArray.push({"slot":orders[i].slotId,"time":(new Date(orders[i].outTime) - new Date(orders[i].inTime))})
+                parkingSlot_model.findOne({slotId:orders[i].slotId},function(err,slot){
+                    if(err){
+                        
+                    }else{
+                        tempIndex = -1;
+                        if(finalArray.length != 0){
 
+                            for(var k=0;k<finalArray.length;k++){
+                                if(finalArray[k].facility == slot.facilityId){
+                                    tempIndex = k;
+                                    console.log("INDEx",k);
+                                    break;
+                                }
+                            }
+                            if(tempIndex == -1){
+                                
+                                finalArray.push({"facility":slot.facilityId,"occupiedHours":hrs})
+                            }
+                            else{
+                                console.log("asdf")
+                                finalArray[tempIndex].occupiedHours = finalArray[tempIndex].occupiedHours + hrs;
+                            }
+                        }
+                        else{
+                            console.log("Phela");
+                            finalArray.push({"facility":slot.facilityId,"occupiedHours":hrs});
+                        }
+
+                    }
+                })
+            console.log(finalArray);
+            }
+        }
+    })
+    res.json("asdf")
+});
+apiRoutes.get('/clients', function(req, res, next) {
+    parkingClient_model.find({},function(err,clients){
+        if(err){
+            res.json({"success":false,code:0,err:err})
+        }else{
+            res.json({"success":true,code:1,clients:clients})
+        }
+    })
+});
 
 apiRoutes.get('/', function(req, res, next) {
     res.sendFile(__dirname + '/index.html');
 });
 
 apiRoutes.post('/slots', function(req, res) {
-
-    var slot = new parkingSlot_model({
-        name: req.body.slotName,
-        slotId: req.body.slotId,
-        facilityId:req.body.facilityId,
-        clientId:req.body.clientId,
-        status: "available"
-    });
-    slot.save(function(err) {
-        if (err) {
-            res.json({success:false,code:0,message:err});
-        } else {
-            res.json({success:true,code:1,message:"slot added"});
-            console.log("added SuccessFully")
-        }
-    })
+ 
+    flag = 0;
+    for(var i=0;i<req.body.slot.length;i++){
+        var slot = new parkingSlot_model({
+            name: req.body.slot[i].name,
+            slotId: req.body.slot[i].sensorId,
+            facilityId:req.body.slot[i].facility,
+            clientId:req.body.client,
+            regNo:null,
+            inTime:null,
+            status: "available",
+            createdAt:new Date()
+        });
+        slot.save(function(err) {
+            if(!err)
+                console.log("added SuccessFully")
+        })
+    }
+    res.json({success:true,code:1,message:"slot added"});
+    
 });
 
 apiRoutes.get('/slots/:clientId', function(req, res, next) {
@@ -163,7 +258,7 @@ client.on('message', function(topic, message) {
     switch(topic){
         case 'client/smartPark/ultraSonicData/occupied':
             startMeter(JSON.parse(message.valueOf()), function(responseData){
-                parkingSlot_model.update({slotId:data.sensor_id},{$set:{status:'full',inTime:responseData.inTime,vehicleNo:responseData.vehicleNo}},function(err,user){
+                parkingSlot_model.update({slotId:responseData.slotId},{$set:{status:'full',inTime:responseData.inTime,regNo:responseData.vehicleNo}},function(err,user){
                                 if(err){
                                     console.log("Some Error",err);
                                 }
@@ -177,7 +272,7 @@ client.on('message', function(topic, message) {
             console.log(JSON.parse(message.valueOf()))
             stopMeter(JSON.parse(message.valueOf()),function(responseData){
                 console.log(responseData);
-                parkingSlot_model.update({slotId:data.sensor_id},{$set:{status:'available',inTime:"",vehicleNo:""}},function(err,user){
+                parkingSlot_model.update({slotId:responseData.slotId},{$set:{status:'available',inTime:null,regNo:null}},function(err,user){
                                 if(err){
                                     console.log("Some Error",err);
                                 }
@@ -205,6 +300,12 @@ var startMeter = function(data,callback){
         });
         downloader.on('end', function() {
                     console.log("done downloading");
+
+            var options = {
+                l: 'eng',
+                psm: 6,
+                binary: '/usr/local/bin/tesseract'
+            };        
             tesseract.process('ocrImages/file.png', options, function(err, text) {
                 if (err) {
                     console.error(err);
@@ -238,6 +339,7 @@ var stopMeter = function(data,callback){
 
         }else{
             order.status = "close";
+            order.outTime = new Date();
             order.amount = (new Date()-order.inTime)*config.chargePerMinute/(60*1000);
             order.save(function(err,order){
                 if(err){
@@ -323,7 +425,7 @@ io.on('connection', function(client_socket) {
 });
 
 // route middleware to verify a token
-/*apiRoutes.use(function(req, res, next) {
+apiRoutes.use(function(req, res, next) {
     // check header or url parameters or post parameters for token
     var token = req.body.token || req.query.token || req.headers['Authorization'];
     // decode token
@@ -348,7 +450,7 @@ io.on('connection', function(client_socket) {
         });
     }
 });
-*/
+
 
 /*app.get('history/:vehicleNumber', function(req, res) {})
 app.get('/parkingStatus/:userName', function(req, res) {
@@ -363,11 +465,6 @@ app.get('/parkingStatus/:userName', function(req, res) {
     res.json("Hogata")
 });*/
 
-var options = {
-    l: 'eng',
-    psm: 6,
-    binary: '/usr/local/bin/tesseract'
-};
 //**************************************Web Socket******************************************//
 
 server.listen(4200);
