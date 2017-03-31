@@ -307,6 +307,20 @@ apiRoutes.post('/authenticate', function(req, res) {
 });
 
 
+io.on('connection', function(client_socket) {
+    client_socket.on('ultraSonicData', function(data) {
+        client.subscribe('client/' + data + '/ldrData')
+        client.publish('server/' + data, "ldrData")
+        client.on('message', function(topic, message) {
+            if (topic === 'client/' + data + '/ldrData') {
+                console.log("ldr data");
+                console.log(message.toString())
+                io.emit("server", 'hey client');
+            }
+        })
+        console.log(data);
+    });
+});
 
 // route middleware to verify a token
 apiRoutes.use(function(req, res, next) {
@@ -336,7 +350,7 @@ apiRoutes.use(function(req, res, next) {
 });
 
 
-app.get('history/:vehicleNumber', function(req, res) {})
+/*app.get('history/:vehicleNumber', function(req, res) {})
 app.get('/parkingStatus/:userName', function(req, res) {
     console.log(req.params.userName)
     var user = req.params.userName;
@@ -347,7 +361,7 @@ app.get('/parkingStatus/:userName', function(req, res) {
         status: "full"
     });
     res.json("Hogata")
-});
+});*/
 
 var options = {
     l: 'eng',
@@ -355,20 +369,6 @@ var options = {
     binary: '/usr/local/bin/tesseract'
 };
 //**************************************Web Socket******************************************//
-io.on('connection', function(client_socket) {
-    client_socket.on('ultraSonicData', function(data) {
-        client.subscribe('client/' + data + '/ldrData')
-        client.publish('server/' + data, "ldrData")
-        client.on('message', function(topic, message) {
-            if (topic === 'client/' + data + '/ldrData') {
-                console.log("ldr data");
-                console.log(message.toString())
-                io.emit("server", 'hey client');
-            }
-        })
-        console.log(data);
-    });
-});
 
 server.listen(4200);
 app.use('/api', apiRoutes);
