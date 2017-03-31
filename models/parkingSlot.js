@@ -5,8 +5,8 @@ var parkingSlot = new Schema({
   name:String,
   sid:String,
   status:Number,
-  reg_no:String,
-  in_time:Date
+  regNo:String,
+  inTime:Date
 
 })
 
