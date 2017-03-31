@@ -30,53 +30,11 @@ mongoose.connect(config.url);
 app.use(cors());
 app.use(express.static(__dirname + '/SmartPark/public/'));
 client.on('connect', function() {})
-pictures = [];
+client.subscribe('client/smartPark/ultraSonicData/occupied')
+client.subscribe('client/smartPark/ultraSonicData/available')
+
 //******************************************all the api end points***************************//
-app.get('/glowLed/:userName', function(req, res) {
-    client.subscribe('client/' + req.params.userName + '/glowLed')
-    client.publish('server/' + req.params.userName, "glow_led")
-    client.on('message', function(topic, message) {
-        if (topic === 'client/' + req.params.userName + '/glowLed') {
-            res.json({
-                state: message.toString()
-            })
-            console.log("led glowing");
-            console.log(message.toString())
-        }
-    })
-})
 
-
-
-function reconstructBase64String(chunk) {
-    console.log(chunk);
-    pChunk = JSON.parse(chunk);
-    //creates a new picture object if receiving a new picture, else adds incoming strings to an existing picture 
-    if (pictures[pChunk["pic_id"]] == null) {
-        pictures[pChunk["pic_id"]] = {
-            "count": 0,
-            "total": pChunk["size"],
-            pieces: {},
-            "pic_id": pChunk["pic_id"]
-        };
-        pictures[pChunk["pic_id"]].pieces[pChunk["pos"]] = pChunk["data"];
-    } else {
-        pictures[pChunk["pic_id"]].pieces[pChunk["pos"]] = pChunk["data"];
-        pictures[pChunk["pic_id"]].count += 1;
-        if (pictures[pChunk["pic_id"]].count == pictures[pChunk["pic_id"]].total) {
-            console.log("Image reception compelete");
-            var str_image = "";
-            for (var i = 0; i <= pictures[pChunk["pic_id"]].total; i++) str_image = str_image + pictures[pChunk["pic_id"]].pieces[i];
-            str_image = "+" + str_image;
-            base64Data = base64Data.replace('+', ' ');
-            binaryData = new Buffer(base64Data, 'base64').toString('binary');
-            fs.writeFile("out.png", binaryData, "binary", function(err) {
-                if (err) console.log(err); // writes out file without error, but it's not a valid image
-                else console.log("ss")
-            });
-        }
-    }
-}
 
 app.post('/addFacility', function(req, res) {
     var facility = new parkingFacility_model({
@@ -92,9 +50,13 @@ app.post('/addFacility', function(req, res) {
         }
     })
 });
-app.get('/', function(req, res, next) {
+
+
+
+apiRoutes.get('/', function(req, res, next) {
     res.sendFile(__dirname + '/index.html');
 });
+
 app.get('/smartPark/', function(req, res, next) {
     res.json({
         success: true,
@@ -102,32 +64,50 @@ app.get('/smartPark/', function(req, res, next) {
     });
 });
 
+apiRoutes.get('/currentMeter/:mobileNo',function(req,res){
+    getCurrentMeter(req.params.mobileNo,function(order){
+        res.json({"success":true,code:1,order:order,message:"current meter Data"});
+    })
+})
+
 apiRoutes.post('/qrdata', function(req, res) {
     users_model.findOne({mobileNo:req.body.mobileNo},function(err,user){
         if(err){
             console.log(err);
         }
         else{
-            console.log(user);
-            orders_model.update({slotId:req.body.slotId,status:"open"}, {$set:{'vehicleNo':user.vehicleNo,'mobileNo':user.mobileNo}}, {multi:false},function(err,order){
+            orders_model.update({slotId:req.body.slotId,status:"open"}, {$set:{'vehicleNo':user.vehicleNo,'mobileNo':user.mobileNo}}, {multi:false},function(err,raw,data){
                 if(err){
                     console.log(err);
                 }
                 else{
-                    console.log(order);
-                    res.json("susesss")
+                    if(raw.n == 0){
+                        res.json({"success":false,code:1,message:"no car at the given parking"});         
+                    }else{
+                        if(raw.n == 1 && raw.nModified == 0){
+                            res.json({"success":false,code:2,message:"Already Scanned"});  
+                        }else{
+                            getCurrentMeter(req.body.mobileNo,function(order){
+                                res.json({"success":true,code:3,message:"qrcode added",order:order});  
+                            });
+                        }
+                    }
                 }
             });
         }
-    });
-
-
-    
+    });    
 });
 
+var getCurrentMeter = function(mobileNo,callback){
+    orders_model.findOne({mobileNo:mobileNo,status:"open"},function(err,order){
+        if(err){
+            res.json({"success":false,code:0,message:err})
+        }else{
+            callback(order);
+        }
+    })
+};
 
-client.subscribe('client/smartPark/ultraSonicData/occupied')
-client.subscribe('client/smartPark/ultraSonicData/available')
 var s3Client = s3.createClient({
   maxAsyncS3: 20,     // this is the default 
   s3RetryCount: 3,    // this is the default 
@@ -148,7 +128,10 @@ client.on('message', function(topic, message) {
             })
             break;
         case 'client/smartPark/ultraSonicData/available':
-            console.log(JSON.parse(message.valueOf()).sensor_id)
+            console.log(JSON.parse(message.valueOf()))
+            stopMeter(JSON.parse(message.valueOf()),function(responseData){
+                console.log(responseData);
+            })
             break;
     }
 });
@@ -167,6 +150,7 @@ var startMeter = function(data,callback){
           console.error("unable to download:", err.stack);
         });
         downloader.on('end', function() {
+                    console.log("done downloading");
             tesseract.process('ocrImages/file.png', options, function(err, text) {
                 if (err) {
                     console.error(err);
@@ -189,18 +173,33 @@ var startMeter = function(data,callback){
                     
                 }
             });
-        console.log("done downloading");
         });
 }
 
 var stopMeter = function(data,callback){
+    console.log(data)
+    orders_model.findOne({slotId:data.sensor_id},function(err,order){
+        if(err){
+
+        }else{
+            order.status = "close";
+            order.amount = (new Date()-order.inTime)*config.chargePerMinute/(60*1000);
+            order.save(function(err,order){
+                if(err){
+
+                }else{
+                    callback(order)
+                }
+            })
+        }
+    })
 
 }
 apiRoutes.post('/register', function(req, res) {
     console.log()
     var newUser = new users_model({
         name:req.body.userName,
-        vehicleNo:req.body.userVheicleNo,
+        vehicleNo:req.body.userVehicleNo,
         password:crypto.createHmac('sha256', config.secret).update(req.body.userPassword).digest('hex'),
         mobileNo:req.body.userNumber,
         createdAt:new Date()
@@ -282,7 +281,6 @@ apiRoutes.use(function(req, res, next) {
 });
 
 
-app.post('qrcode', function(req, res) {});
 app.get('history/:vehicleNumber', function(req, res) {})
 app.get('/parkingStatus/:userName', function(req, res) {
     console.log(req.params.userName)

@@ -17,14 +17,14 @@ def on_message(client, userdata, msg):
             client.publish("client/ameyashukla/ultraSonicData",i)    
 
 def sendData():
-        client.publish('client/smartPark/ultraSonicData/occupied','{"sensor_id":"sense01","key":"<Key: smartparkimage,ocrimages/2017/03/index.png>"}')
+        client.publish('client/smartPark/ultraSonicData/occupied','{"sensor_id":"sense01","key":"ocrimages/2017/03/index.png"}')
     # while (count < 9):
     #     print 'The count is:', count
     #     count = count + 1
     #     client.publish("client/ameyashukla/ultraSonicData","how it is")
 
 def sendData1():
-    client.publish('client/smartPark/ultraSonicData/occupied','{"sensor_id":"sense01"}')
+    client.publish('client/smartPark/ultraSonicData/available','{"sensor_id":"sense01"}')
 
 
 client = mqtt.Client()
@@ -34,7 +34,7 @@ client.on_message = on_message
 
 client.connect("localhost", 1883, 60)
 if __name__ == '__main__':
-    sendData()
+    sendData1()
 
 # Blocking call that processes network traffic, dispatches callbacks and
 # handles reconnecting.
