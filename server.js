@@ -156,10 +156,10 @@ client.on('message', function(topic, message) {
 var startMeter = function(data,callback){
     console.log(data);
     var params = {
-          localFile: "ocrImages/file.jpg",
+          localFile: "ocrImages/file.png",
           s3Params: {
             Bucket: "smartparkimage",
-            Key: "ocrimages/2017/03/samp01.jpg",
+            Key: data.key
           },
         };
         var downloader = s3Client.downloadFile(params);
@@ -167,7 +167,7 @@ var startMeter = function(data,callback){
           console.error("unable to download:", err.stack);
         });
         downloader.on('end', function() {
-            tesseract.process('ocrImages/file.jpg', options, function(err, text) {
+            tesseract.process('ocrImages/file.png', options, function(err, text) {
                 if (err) {
                     console.error(err);
                 } else {
