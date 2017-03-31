@@ -323,7 +323,7 @@ io.on('connection', function(client_socket) {
 });
 
 // route middleware to verify a token
-apiRoutes.use(function(req, res, next) {
+/*apiRoutes.use(function(req, res, next) {
     // check header or url parameters or post parameters for token
     var token = req.body.token || req.query.token || req.headers['Authorization'];
     // decode token
@@ -348,7 +348,7 @@ apiRoutes.use(function(req, res, next) {
         });
     }
 });
-
+*/
 
 /*app.get('history/:vehicleNumber', function(req, res) {})
 app.get('/parkingStatus/:userName', function(req, res) {
