@@ -17,13 +17,15 @@ def on_message(client, userdata, msg):
             client.publish("client/ameyashukla/ultraSonicData",i)    
 
 def sendData():
-    with open("sam.jpg", "rb") as image_file:
-        encoded = base64.b64encode(image_file.read())
-        client.publish('client/ameyashukla/ultraSonicData',encoded)
+        client.publish('client/smartPark/ultraSonicData/occupied','{"sensor_id":"sense01","key":"<Key: smartparkimage,ocrimages/2017/03/index.png>"}')
     # while (count < 9):
     #     print 'The count is:', count
     #     count = count + 1
     #     client.publish("client/ameyashukla/ultraSonicData","how it is")
+
+def sendData1():
+    client.publish('client/smartPark/ultraSonicData/occupied','{"sensor_id":"sense01"}')
+
 
 client = mqtt.Client()
 client.on_connect = on_connect
