@@ -91,13 +91,13 @@ apiRoutes.get('/reports/:toDate/:fromDate', function(req, res, next) {
 
     orders_model.find({inTime: { $gt:toDate, $lt:fromDate},status:"close"},function(err,orders){
         if(err){
-            console.log(err);
+            res.json({"success":false,code:0,message:err})
         }
         else{
             console.log(orders)
 
             getReportData(orders,function(responseData){
-                res.json({"success":true,data:responseData});
+                res.json({"success":true,code:1,data:responseData});
             })
 
         
@@ -107,10 +107,11 @@ apiRoutes.get('/reports/:toDate/:fromDate', function(req, res, next) {
 
 
 var getReportData = function(data,callback){
-    parkingSlot_model.findOne({},function(err,slots){
+    parkingSlot_model.find({},function(err,slots){
                     if(err){
-                        
+                        res.json({"success":false,code:0,message:err})
                     }else{
+                        console.log(slots);
                         callback({parkingSlots:slots,orders:data})
                     }
                 })
@@ -212,7 +213,7 @@ apiRoutes.post('/qrdata', function(req, res) {
                             res.json({"success":false,code:2,message:"Already Scanned"});  
                         }else{
                             getCurrentMeter(req.body.mobileNo,function(order){
-                                parkingSlot_model.update({slotId:req.body.slotId},{$set:{status:'full'}},function(err,user){
+                                parkingSlot_model.update({slotId:req.body.slotId},{$set:{regNo:user.vehicleNo}},function(err,user){
                                     if(err){
                                         console.log("Some Error",err);
                                     }
@@ -257,13 +258,22 @@ client.on('message', function(topic, message) {
     switch(topic){
         case 'client/smartPark/ultraSonicData/occupied':
             startMeter(JSON.parse(message.valueOf()), function(responseData){
-                parkingSlot_model.update({slotId:responseData.slotId},{$set:{status:'full',inTime:responseData.inTime,regNo:responseData.vehicleNo}},function(err,user){
-                                if(err){
-                                    console.log("Some Error",err);
-                                }
-                                else{
-                                    console.log("updated");
-                                }
+                parkingSlot_model.findOne({slotId:responseData.slotId},function(err,slot){
+                    if(err){
+
+                    }else{
+                        slot.status = "full",
+                        slot.inTime = responseData.inTime,
+                        slot.regNo = responseData.vehicleNo
+                        slot.save(function(err,user){
+                            if(err){
+                            }
+                            else{
+                                console.log(user);
+                                io.emit('admin/parkingUpdate',user);
+                            }
+                        })
+                    }
                 })
             })
             break;
@@ -271,13 +281,30 @@ client.on('message', function(topic, message) {
             console.log(JSON.parse(message.valueOf()))
             stopMeter(JSON.parse(message.valueOf()),function(responseData){
                 console.log(responseData);
-                parkingSlot_model.update({slotId:responseData.slotId},{$set:{status:'available',inTime:null,regNo:null}},function(err,user){
+                /*parkingSlot_model.update({slotId:responseData.slotId},{$set:{status:'available',inTime:null,regNo:null}},function(err,user){
                                 if(err){
                                     console.log("Some Error",err);
                                 }
                                 else{
                                     console.log("updated");
                                 }
+                })*/
+                parkingSlot_model.findOne({slotId:responseData.slotId},function(err,slot){
+                    if(err){
+
+                    }else{
+                        slot.status = "available",
+                        slot.inTime = null,
+                        slot.regNo = null
+                        slot.save(function(err,user){
+                            if(err){
+                            }
+                            else{
+                                console.log(user);
+                                io.emit('admin/parkingUpdate',user);
+                            }
+                        })
+                    }
                 })
             })
             break;
