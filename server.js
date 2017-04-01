@@ -196,11 +196,13 @@ apiRoutes.get('/currentMeter/:mobileNo',function(req,res){
 })
 
 apiRoutes.post('/qrdata', function(req, res) {
+    console.log("body",req.body);
     users_model.findOne({mobileNo:req.body.mobileNo},function(err,user){
         if(err){
             res.json({"success":false,code:0,message:err})
         }
         else{
+            console.log("user",user);
             orders_model.update({slotId:req.body.slotId,status:"open"}, {$set:{'vehicleNo':user.vehicleNo,'mobileNo':user.mobileNo}}, {multi:false},function(err,raw,data){
                 if(err){
                     res.json({"success":false,code:0,message:err})
