@@ -332,6 +332,7 @@ var startMeter = function(data,callback){
                     console.error(err);
                 } else {
                     console.log(text);
+                    text = text.replace(/(\r\n|\n|\r)/gm,"");
                     var newOrder = new orders_model({
                         vehicleNo:text,
                         slotId:data.sensor_id,
