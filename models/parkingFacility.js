@@ -4,7 +4,6 @@ var Schema = mongoose.Schema
 var parkingFacility = new Schema({
   name:String,
   clientId:String,
-  capacity:Number,
   createdAt:Date
 })
 

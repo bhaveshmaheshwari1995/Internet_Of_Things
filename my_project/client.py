@@ -32,7 +32,7 @@ client.on_connect = on_connect
 client.on_message = on_message
 
 
-client.connect("ec2-54-190-10-153.us-west-2.compute.amazonaws.com", 1883, 60)
+client.connect("localhost", 1883, 60)
 if __name__ == '__main__':
     sendData1()
 

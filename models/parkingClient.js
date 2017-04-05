@@ -2,7 +2,7 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema
 
 var parkingClient = new Schema({
-  clientId:String,
+  clientId:{ type : String , unique : true},
   defaultFacility:String,
   createdAt:Date,
 })

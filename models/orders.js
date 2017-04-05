@@ -10,6 +10,8 @@ var order = new Schema({
   outTime:Date,
   mobileNo:String,
   amount:Number,
+  facilityId:String,
+  clientId:String,
   
 
 })

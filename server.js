@@ -41,11 +41,11 @@ apiRoutes.post('/facility', function(req, res) {
     var facility = new parkingFacility_model({
         name: req.body.name,
         clientId: req.body.client,
-        capacity: req.body.capacity,
         createdAt:new Date()
     });
     facility.save(function(err) {
         if (err) {
+            console.log(err);
             res.json({success:false,code:0,message:err});
         } else {
             res.json({success:true,code:1,message:"facility added"});
@@ -72,8 +72,22 @@ apiRoutes.post('/clients', function(req, res) {
         if (err) {
             res.json({success:false,code:0,message:err});
         } else {
-            res.json({success:true,code:1,message:"facility added"});
-            console.log("added SuccessFully")
+                var facility = new parkingFacility_model({
+                    name: req.body.defaultFacility,
+                    clientId: req.body.client,
+                    createdAt:new Date()
+                });
+                facility.save(function(err) {
+                    if (err) {
+                        res.json({success:false,code:0,message:err});
+                    } else {
+                        res.json({success:true,code:1,message:"client added"});
+                        console.log("added SuccessFully")
+                    }
+    })
+            
+            /*res.json({success:true,code:1,message:"facility added"});
+            console.log("added SuccessFully")*/
         }
     })
 });
@@ -203,7 +217,7 @@ apiRoutes.post('/qrdata', function(req, res) {
         }
         else{
             console.log("user",user);
-            orders_model.update({slotId:req.body.slotId,status:"open"}, {$set:{'vehicleNo':user.vehicleNo,'mobileNo':user.mobileNo}}, {multi:false},function(err,raw,data){
+            orders_model.update({slotId:req.body.slotId,status:"open"}, {$set:{'vehicleNo':user.vehicleNo,'mobileNo':user.mobileNo,'clientId':req.body.clientId,'facilityId':req.body.facilityId}}, {multi:false},function(err,raw,data){
                 if(err){
                     res.json({"success":false,code:0,message:err})
                 }
@@ -273,6 +287,7 @@ client.on('message', function(topic, message) {
                             else{
                                 console.log(user);
                                 io.emit('admin/parkingUpdate',user);
+                                console.log("ho gaya")
                             }
                         })
                     }
@@ -283,14 +298,6 @@ client.on('message', function(topic, message) {
             console.log(JSON.parse(message.valueOf()))
             stopMeter(JSON.parse(message.valueOf()),function(responseData){
                 console.log(responseData);
-                /*parkingSlot_model.update({slotId:responseData.slotId},{$set:{status:'available',inTime:null,regNo:null}},function(err,user){
-                                if(err){
-                                    console.log("Some Error",err);
-                                }
-                                else{
-                                    console.log("updated");
-                                }
-                })*/
                 parkingSlot_model.findOne({slotId:responseData.slotId},function(err,slot){
                     if(err){
 
@@ -304,6 +311,7 @@ client.on('message', function(topic, message) {
                             else{
                                 console.log(user);
                                 io.emit('admin/parkingUpdate',user);
+                                console.log("ho gaya")
                             }
                         })
                     }
@@ -334,7 +342,7 @@ var startMeter = function(data,callback){
                 psm: 6,
                 binary: '/usr/local/bin/tesseract'
             };        
-            tesseract.process('ocrImages/file.png', options, function(err, text) {
+            tesseract.process('ocrImages/file.jpg', options, function(err, text) {
                 if (err) {
                     console.error(err);
                 } else {
@@ -378,7 +386,6 @@ var stopMeter = function(data,callback){
             })
         }
     })
-
 }
 apiRoutes.post('/register', function(req, res) {
     console.log()
@@ -479,19 +486,6 @@ apiRoutes.use(function(req, res, next) {
     }
 });
 
-
-/*app.get('history/:vehicleNumber', function(req, res) {})
-app.get('/parkingStatus/:userName', function(req, res) {
-    console.log(req.params.userName)
-    var user = req.params.userName;
-    io.emit(user, {
-        "slot_no": "A2",
-        "reg_no": "TN 14 H 08895",
-        "in_time": new Date(),
-        status: "full"
-    });
-    res.json("Hogata")
-});*/
 
 //**************************************Web Socket******************************************//
 
