@@ -109,27 +109,12 @@ apiRoutes.get('/reports/:toDate/:fromDate', function(req, res, next) {
         }
         else{
             console.log(orders)
-
-            getReportData(orders,function(responseData){
-                res.json({"success":true,code:1,data:responseData});
-            })
-
+                res.json({"success":true,code:1,orders:orders});
         
         }
     })
 });
 
-
-var getReportData = function(data,callback){
-    parkingSlot_model.find({},function(err,slots){
-                    if(err){
-                        res.json({"success":false,code:0,message:err})
-                    }else{
-                        console.log(slots);
-                        callback({orders:data})
-                    }
-                })
-}
 apiRoutes.get('/clients', function(req, res, next) {
     parkingClient_model.find({},function(err,clients){
         if(err){
