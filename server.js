@@ -347,7 +347,6 @@ var startMeter = function(data,callback){
                             callback(order);
                         }
                     })
-        });
                     
                     
                 }
