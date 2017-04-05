@@ -333,7 +333,7 @@ var startMeter = function(data,callback){
                 } else {
                     console.log(text);
                     var newOrder = new orders_model({
-                        vehicleNo:"text",
+                        vehicleNo:text
                         slotId:data.sensor_id,
                         inTime:new Date(),
                         status:"open",
@@ -351,6 +351,7 @@ var startMeter = function(data,callback){
                     
                 }
             });
+        }
             
 }
 
