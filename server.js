@@ -325,7 +325,7 @@ var startMeter = function(data,callback){
             var options = {
                 l: 'eng',
                 psm: 6,
-                binary: 'home/ubuntu/hackathon/Internet_Of_Things/'
+                binary: 'home/ubuntu/hackathon/Internet_Of_Things'
             };        
             tesseract.process('ocrImages/file.jpg', options, function(err, text) {
                 if (err) {
@@ -333,7 +333,7 @@ var startMeter = function(data,callback){
                 } else {
                     console.log(text);
                     var newOrder = new orders_model({
-                        vehicleNo:text
+                        vehicleNo:text,
                         slotId:data.sensor_id,
                         inTime:new Date(),
                         status:"open",
@@ -348,11 +348,9 @@ var startMeter = function(data,callback){
                         }
                     })
                     
-                    
                 }
             });
-        }
-            
+        });
 }
 
 var stopMeter = function(data,callback){
