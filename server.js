@@ -64,7 +64,7 @@ apiRoutes.get('/facility/:clientId', function(req, res, next) {
 });
 apiRoutes.post('/clients', function(req, res) {
     var client = new parkingClient_model({
-        clientId:req.body.client,
+        clientId:req.body.clientId,
         defaultFacility: req.body.defaultFacility,
         createdAt:new Date()
     });
@@ -74,7 +74,7 @@ apiRoutes.post('/clients', function(req, res) {
         } else {
                 var facility = new parkingFacility_model({
                     name: req.body.defaultFacility,
-                    clientId: req.body.client,
+                    clientId: req.body.clientId,
                     createdAt:new Date()
                 });
                 facility.save(function(err) {
@@ -126,7 +126,7 @@ var getReportData = function(data,callback){
                         res.json({"success":false,code:0,message:err})
                     }else{
                         console.log(slots);
-                        callback({parkingSlots:slots,orders:data})
+                        callback({orders:data})
                     }
                 })
 }
