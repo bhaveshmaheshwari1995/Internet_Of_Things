@@ -325,18 +325,14 @@ var startMeter = function(data,callback){
             var options = {
                 l: 'eng',
                 psm: 6,
-                binary: '/usr/local/bin/tesseract'
+                binary: 'home/ubuntu/hackathon/Internet_Of_Things/'
             };        
-            /*tesseract.process('ocrImages/file.jpg', options, function(err, text) {
+            tesseract.process('ocrImages/file.jpg', options, function(err, text) {
                 if (err) {
                     console.error(err);
                 } else {
                     console.log(text);
-                    
-                    
-                }
-            });*/
-            var newOrder = new orders_model({
+                    var newOrder = new orders_model({
                         vehicleNo:"text",
                         slotId:data.sensor_id,
                         inTime:new Date(),
@@ -352,6 +348,11 @@ var startMeter = function(data,callback){
                         }
                     })
         });
+                    
+                    
+                }
+            });
+            
 }
 
 var stopMeter = function(data,callback){
