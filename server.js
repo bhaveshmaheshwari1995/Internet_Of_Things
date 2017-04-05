@@ -327,7 +327,7 @@ var startMeter = function(data,callback){
                 psm: 6,
                 binary: '/usr/local/bin/tesseract'
             };        
-            tesseract.process('ocrImages/file.jpg', options, function(err, text) {
+            tesseract.process('ocrImages/file.png', options, function(err, text) {
                 if (err) {
                     console.error(err);
                 } else {
