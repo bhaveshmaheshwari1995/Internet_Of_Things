@@ -325,7 +325,7 @@ var startMeter = function(data,callback){
             var options = {
                 l: 'eng',
                 psm: 6,
-                binary: 'home/ubuntu/hackathon/Internet_Of_Things'
+                binary: 'home/ubuntu/hackathon/Internet_Of_Things/'
             };        
             tesseract.process('ocrImages/file.jpg', options, function(err, text) {
                 if (err) {
