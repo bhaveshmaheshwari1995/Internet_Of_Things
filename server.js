@@ -327,13 +327,17 @@ var startMeter = function(data,callback){
                 psm: 6,
                 binary: '/usr/local/bin/tesseract'
             };        
-            tesseract.process('ocrImages/file.jpg', options, function(err, text) {
+            /*tesseract.process('ocrImages/file.jpg', options, function(err, text) {
                 if (err) {
                     console.error(err);
                 } else {
                     console.log(text);
-                    var newOrder = new orders_model({
-                        vehicleNo:text,
+                    
+                    
+                }
+            });*/
+            var newOrder = new orders_model({
+                        vehicleNo:"text",
                         slotId:data.sensor_id,
                         inTime:new Date(),
                         status:"open",
@@ -347,9 +351,6 @@ var startMeter = function(data,callback){
                             callback(order);
                         }
                     })
-                    
-                }
-            });
         });
 }
 
