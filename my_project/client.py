@@ -34,7 +34,7 @@ client.on_message = on_message
 
 client.connect("ec2-54-244-38-92.us-west-2.compute.amazonaws.com", 1883, 60)
 if __name__ == '__main__':
-    sendData()
+    sendData1()
 
 # Blocking call that processes network traffic, dispatches callbacks and
 # handles reconnecting.
